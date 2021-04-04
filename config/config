@@ -183,7 +183,7 @@ DEBOOTSTRAP_LIST=$(echo $DEBOOTSTRAP_LIST | sed -e 's,\\[trn],,g')
 # Essential packages
 PACKAGE_LIST="bc cpufrequtils device-tree-compiler fping fake-hwclock psmisc chrony parted dialog \
 	ncurses-term sysfsutils toilet figlet u-boot-tools usbutils openssh-server nocache debconf-utils \
-	python3-apt make gcc libc6-dev"
+	python3-apt make gcc libc6-dev plymouth plymouth-themes"
 
 # Non-essential packages
 PACKAGE_LIST_ADDITIONAL="network-manager wireless-tools lsof htop mmc-utils wget nano sysstat net-tools \
@@ -300,6 +300,10 @@ else
 fi
 
 PACKAGE_LIST+=" $PACKAGE_LIST_RELEASE $PACKAGE_LIST_ADDITIONAL"
+
+# Board Dependencies
+PACKAGE_LIST_BOARD_DEPS="$PACKAGE_LIST"
+[[ "$DISTRIB_TYPE" != "minimal" ]] && PACKAGE_LIST_BOARD_DEPS+=" $PACKAGE_LIST_SERVER_KODI $PACKAGE_LIST_GSTREAMER"
 
 if [[ "$DISTRIB_TYPE" != "server" ]] && [[ "$DISTRIB_TYPE" != "minimal" ]]; then
 	PACKAGE_LIST+=" $PACKAGE_LIST_DESKTOP"

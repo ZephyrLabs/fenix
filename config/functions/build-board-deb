@@ -10,7 +10,7 @@ build_board_deb() {
 	rm -rf $pkgdir
 	mkdir -p $pkgdir/DEBIAN
 
-	board_deb_dependencies=$(echo $PACKAGE_LIST_ADDITIONAL)
+	board_deb_dependencies=$(echo $PACKAGE_LIST_BOARD_DEPS)
 	board_deb_dependencies=${board_deb_dependencies// /,}
 
 	cat <<-EOF > $pkgdir/DEBIAN/control
@@ -19,7 +19,7 @@ build_board_deb() {
 	Architecture: $DISTRIB_ARCH
 	Maintainer: Khadas <hello@khadas.com>
 	Installed-Size: 1
-	Replaces: alsa-utils, linux-firmware, watchdog, base-files, mpv, zram-config, haveged, initramfs-tools-core, ppp, linux-board-package-${DISTRIB_RELEASE,,}-vim1, linux-board-package-${DISTRIB_RELEASE,,}-vim2, linux-board-package-${DISTRIB_RELEASE,,}-vim3, linux-board-package-${DISTRIB_RELEASE,,}-vim3l
+	Replaces: alsa-utils, linux-firmware, watchdog, base-files, mpv, zram-config, haveged, initramfs-tools-core, ppp, linux-board-package-${DISTRIB_RELEASE,,}-vim1, linux-board-package-${DISTRIB_RELEASE,,}-vim2, linux-board-package-${DISTRIB_RELEASE,,}-vim3, linux-board-package-${DISTRIB_RELEASE,,}-vim3l, plymouth
 	Section: kernel
 	Priority: optional
 	Recommends: ${board_deb_dependencies}
@@ -204,6 +204,30 @@ build_board_deb() {
 
 	systemctl --no-reload enable fenix-zram-config.service fenix-hardware-optimize.service >/dev/null 2>&1
 
+	# Setup plymouth
+	case "\$1" in
+		configure)
+		update-alternatives \
+			--install /usr/share/plymouth/themes/default.plymouth default.plymouth \
+			/usr/share/plymouth/themes/fenix/fenix.plymouth 150
+
+		ln -fs /usr/share/plymouth/themes/fenix/fenix.plymouth /etc/alternatives/default.plymouth
+
+		if which update-initramfs >/dev/null 2>&1
+		then
+			update-initramfs -u
+		fi
+		;;
+
+		abort-upgrade|abort-deconfigure|abort-remove)
+		;;
+
+		*)
+		echo "\$0 called with unknown argument '\$1'" 1>&2
+		exit 1
+		;;
+	esac
+
 	exit 0
 	EOF
 
@@ -315,6 +339,8 @@ build_board_deb() {
 	# Install bmp logo
 	mkdir -p $pkgdir/usr/share/fenix/logo
 	cp $ROOT/archives/logo/bmp/* $pkgdir/usr/share/fenix/logo
+	# Install png logo
+	cp $ROOT/archives/logo/png/*.png $pkgdir/usr/share/fenix/logo
 
 	if [ "$KHADAS_BOARD" == "VIM1" ] && [ "$DISTRIB_RELEASE" == "bionic" ]; then
 		# Blacklist lima.ko
@@ -387,7 +413,7 @@ build_board_deb() {
 
 	# Add dependencies file
 	cat <<-EOF > $pkgdir/etc/fenix-board-dependencis
-	FENIX_BOARD_DEPENDENCIES="$(echo $PACKAGE_LIST_ADDITIONAL)"
+	FENIX_BOARD_DEPENDENCIES="$(echo $PACKAGE_LIST_BOARD_DEPS)"
 	EOF
 
 	# Create board deb file
