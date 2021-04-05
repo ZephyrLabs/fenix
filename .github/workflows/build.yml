@@ -18,11 +18,11 @@ jobs:
           sudo apt update
           sudo apt install -y make lsb-release qemu-user-static zip
           
-      # Build
+      # Build COMPRESS_IMAGE=yes
       - name: Build
         run: |
           source env/setenv.sh config config-template.conf
-          COMPRESS_IMAGE=yes make
+          make
      
      # Upload to GH Actions Artifacts
      #${{ github.workspace }}/build/images/*.img.xz
